@@ -53,6 +53,19 @@ export function ExamPage() {
   const [finalQuestionTimes, setFinalQuestionTimes] = useState<Record<string, number>>({});
   const [reviewQuestionIndex, setReviewQuestionIndex] = useState<number | null>(null);
   const [showEndTestDialog, setShowEndTestDialog] = useState(false);
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
+  const [showExamConfirm, setShowExamConfirm] = useState(false);
+  const [resultsView, setResultsView] = useState<'table' | 'score'>('table');
+  const [showNavigator, setShowNavigator] = useState(false);
+
+  const toggleFlag = useCallback((qId: string) => {
+    setFlaggedQuestions(prev => {
+      const next = new Set(prev);
+      if (next.has(qId)) next.delete(qId);
+      else next.add(qId);
+      return next;
+    });
+  }, []);
 
   // Fetch papers from Supabase (with cache + timeout)
   useEffect(() => {
@@ -229,6 +242,7 @@ export function ExamPage() {
     setFinalTotal(qs.length);
     setScoreDetails(details);
     setFinalQuestionTimes(qTimes);
+    setResultsView('table');
 
     if (sessionId) {
       supabase
@@ -257,16 +271,149 @@ export function ExamPage() {
       <PreExamCheck
         onComplete={() => {
           setShowPreCheck(false);
-          beginExam();
+          setShowExamConfirm(true);
         }}
         onBack={() => setShowPreCheck(false)}
       />
     );
   }
 
+  // ---- Exam Confirmation Page (after PreExamCheck) ----
+  if (showExamConfirm && !examStarted && selectedPaper) {
+    const qCount = (selectedPaper.questions as Question[]).length;
+    return (
+      <div style={{
+        fontFamily: "'Times New Roman', Times, serif",
+        minHeight: '100vh', background: '#ffffff',
+      }}>
+        {/* Blue Top Bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 32px', height: 48,
+          background: '#306ca0',
+        }}>
+          <span style={{
+            fontSize: 18, fontWeight: 400, color: '#ffffff',
+            fontFamily: "'Times New Roman', Times, serif",
+            letterSpacing: '0.3px',
+          }}>
+            Test of Mathematics for University Admission
+          </span>
+        </div>
+
+        {/* Content */}
+        <div style={{ maxWidth: 700, margin: '0 auto', padding: '48px 20px' }}>
+          <h1 style={{
+            fontSize: 22, fontWeight: 400, color: '#333',
+            fontFamily: "'Times New Roman', Times, serif",
+            textAlign: 'center', marginBottom: 32,
+          }}>
+            Examination Confirmation
+          </h1>
+
+          <div style={{
+            background: '#fafafa', borderRadius: 8,
+            border: '1px solid #e0e0e0', padding: '28px 32px',
+            marginBottom: 28,
+          }}>
+            <div style={{ marginBottom: 20 }}>
+              <h3 style={{
+                margin: '0 0 4px 0', fontSize: 16, fontWeight: 600, color: '#333',
+                fontFamily: "'Times New Roman', Times, serif",
+              }}>
+                {selectedPaper.title}
+              </h3>
+              <p style={{ margin: 0, fontSize: 13, color: '#888' }}>
+                {selectedPaper.year} — Paper {selectedPaper.paper_number}
+              </p>
+            </div>
+
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr',
+              gap: '12px 24px', marginBottom: 20,
+            }}>
+              <div>
+                <span style={{ fontSize: 12, color: '#888' }}>Duration</span>
+                <p style={{ margin: '2px 0 0', fontSize: 14, fontWeight: 600, color: '#333' }}>
+                  {selectedPaper.duration_minutes} minutes
+                </p>
+              </div>
+              <div>
+                <span style={{ fontSize: 12, color: '#888' }}>Total Questions</span>
+                <p style={{ margin: '2px 0 0', fontSize: 14, fontWeight: 600, color: '#333' }}>
+                  {qCount}
+                </p>
+              </div>
+              <div>
+                <span style={{ fontSize: 12, color: '#888' }}>Total Marks</span>
+                <p style={{ margin: '2px 0 0', fontSize: 14, fontWeight: 600, color: '#333' }}>
+                  {selectedPaper.total_marks}
+                </p>
+              </div>
+              <div>
+                <span style={{ fontSize: 12, color: '#888' }}>Topics</span>
+                <p style={{ margin: '2px 0 0', fontSize: 14, fontWeight: 600, color: '#333' }}>
+                  {selectedPaper.topics?.join(', ') || 'Mathematics'}
+                </p>
+              </div>
+            </div>
+
+            <div style={{
+              background: '#fff', borderRadius: 6, border: '1px solid #e0e0e0',
+              padding: '16px 20px',
+            }}>
+              <h4 style={{
+                margin: '0 0 10px 0', fontSize: 13, fontWeight: 600, color: '#333',
+                fontFamily: "'Times New Roman', Times, serif",
+              }}>
+                Important Information
+              </h4>
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: '#555', lineHeight: 1.8 }}>
+                <li>Once you begin, the timer will start immediately</li>
+                <li>You must remain in fullscreen mode for the entire duration</li>
+                <li>Your webcam and microphone must remain active</li>
+                <li>Do not switch tabs, windows, or applications</li>
+                <li>You may flag questions to review later</li>
+                <li>Submit your exam when you have answered all questions</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center', display: 'flex', gap: 16, justifyContent: 'center' }}>
+            <button
+              onClick={() => setShowExamConfirm(false)}
+              style={{
+                padding: '12px 40px', fontSize: 15, fontWeight: 400,
+                background: '#fff', color: '#333',
+                border: '1px solid #ccc', borderRadius: 4, cursor: 'pointer',
+                fontFamily: "'Times New Roman', Times, serif",
+              }}
+            >
+              Back
+            </button>
+            <button
+              onClick={() => {
+                setShowExamConfirm(false);
+                beginExam();
+              }}
+              style={{
+                padding: '12px 40px', fontSize: 15, fontWeight: 400,
+                background: '#306ca0', color: '#fff',
+                border: 'none', borderRadius: 4, cursor: 'pointer',
+                fontFamily: "'Times New Roman', Times, serif",
+              }}
+            >
+              Confirm & Start Exam
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ---- Paper Selection Screen ----
   const paperColor = (paper: Paper) => {
-    if (paper.paper_number === 1) return { bg: '#eff6ff', accent: '#3b82f6', gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' };
+    if (paper.paper_number === 1) return { bg: '#eff6ff', accent: '#306ca0', gradient: 'linear-gradient(135deg, #306ca0, #1e5a8a)' };
     return { bg: '#f0fdf4', accent: '#22c55e', gradient: 'linear-gradient(135deg, #22c55e, #15803d)' };
   };
 
@@ -671,178 +818,352 @@ export function ExamPage() {
       );
     }
 
-    // Main results screen: question status list
-    const qs = (selectedPaper?.questions as Question[]) || [];
-    const answeredCount = qs.filter((q) => answers[q.id] !== undefined).length;
-    const unseenCount = qs.length - answeredCount;
+    // Results Table (截屏4): Page | Title | Status | Flag | Review
+    if (resultsView === 'table') {
+      const qs = (selectedPaper?.questions as Question[]) || [];
+      const answeredCount = qs.filter((q) => answers[q.id] !== undefined).length;
+      const unseenCount = qs.length - answeredCount;
 
-    return (
-      <div style={{
-        fontFamily: "'Times New Roman', Times, serif",
-        userSelect: 'none', width: '100vw', height: '100vh',
-        display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        background: '#ffffff',
-      }}>
-        {/* Blue Top Bar */}
+      return (
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 32px', height: 48, flexShrink: 0,
-          background: '#306ca0',
+          fontFamily: "'Times New Roman', Times, serif",
+          userSelect: 'none', width: '100vw', height: '100vh',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          background: '#ffffff',
         }}>
-          <span style={{
-            fontSize: 18, fontWeight: 400, color: '#ffffff',
-            fontFamily: "'Times New Roman', Times, serif",
-            letterSpacing: '0.3px',
+          {/* Blue Top Bar */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '0 24px', height: 48, flexShrink: 0,
+            background: '#306ca0',
           }}>
-            Test of Mathematics for University Admission
-          </span>
-          <span style={{
-            fontSize: 18, fontWeight: 400, color: '#ffffff',
-            fontFamily: "'Times New Roman', Times, serif",
-          }}>
-            Results
-          </span>
-        </div>
-
-        {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px', background: '#f5f5f5' }}>
-          <div style={{ maxWidth: 900, margin: '0 auto' }}>
-            {/* Summary */}
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              marginBottom: 20,
+            <span style={{
+              fontSize: 18, fontWeight: 400, color: '#ffffff',
+              fontFamily: "'Times New Roman', Times, serif",
+              letterSpacing: '0.3px',
             }}>
-              <h2 style={{
-                margin: 0, fontSize: 20, fontWeight: 400, color: '#333',
-                fontFamily: "'Times New Roman', Times, serif",
-              }}>
-                Question Status
-              </h2>
-              <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#666', fontFamily: "'Times New Roman', Times, serif" }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#16a34a' }} />
-                  Completed ({answeredCount})
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#d97706' }} />
-                  Unseen ({unseenCount})
-                </span>
-              </div>
-            </div>
-
-            {/* Question list */}
-            <div style={{
-              background: '#fff', borderRadius: 8,
-              border: '1px solid #e0e0e0', overflow: 'hidden',
+              Test of Mathematics for University Admission
+            </span>
+            <span style={{
+              fontSize: 15, fontWeight: 400, color: '#ffffff',
+              fontFamily: "'Times New Roman', Times, serif",
             }}>
-              {/* Header row */}
+              Results
+            </span>
+          </div>
+
+          {/* Content */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px', background: '#f5f5f5' }}>
+            <div style={{ maxWidth: 960, margin: '0 auto' }}>
               <div style={{
-                display: 'flex', alignItems: 'center',
-                padding: '10px 20px', background: '#fafafa',
-                borderBottom: '2px solid #e0e0e0',
-                fontSize: 13, fontWeight: 600, color: '#555',
-                fontFamily: "'Times New Roman', Times, serif",
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                marginBottom: 20,
               }}>
-                <span style={{ width: 80 }}>Question</span>
-                <span style={{ flex: 1 }}>Status</span>
-                <span style={{ width: 100, textAlign: 'right' }}>Action</span>
+                <h2 style={{
+                  margin: 0, fontSize: 20, fontWeight: 400, color: '#333',
+                  fontFamily: "'Times New Roman', Times, serif",
+                }}>
+                  Question Status
+                </h2>
+                <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#666', fontFamily: "'Times New Roman', Times, serif" }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#16a34a' }} />
+                    Completed ({answeredCount})
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#d97706' }} />
+                    Unseen ({unseenCount})
+                  </span>
+                </div>
               </div>
 
-              {qs.map((q, i) => {
-                const isAnswered = answers[q.id] !== undefined;
-                return (
-                  <div key={q.id} style={{
-                    display: 'flex', alignItems: 'center',
-                    padding: '10px 20px',
-                    borderBottom: i < qs.length - 1 ? '1px solid #f0f0f0' : 'none',
-                    fontSize: 14, fontFamily: "'Times New Roman', Times, serif",
-                  }}>
-                    <span style={{ width: 80, fontWeight: 600, color: '#333' }}>
-                      Question {i + 1}
-                    </span>
-                    <span style={{
-                      flex: 1, fontWeight: 600,
-                      color: isAnswered ? '#16a34a' : '#d97706',
+              {/* Table */}
+              <div style={{
+                background: '#fff', borderRadius: 8,
+                border: '1px solid #e0e0e0', overflow: 'hidden',
+              }}>
+                {/* Header row */}
+                <div style={{
+                  display: 'flex', alignItems: 'center',
+                  padding: '10px 20px', background: '#fafafa',
+                  borderBottom: '2px solid #e0e0e0',
+                  fontSize: 13, fontWeight: 600, color: '#555',
+                  fontFamily: "'Times New Roman', Times, serif",
+                }}>
+                  <span style={{ width: 60 }}>Page</span>
+                  <span style={{ flex: 1 }}>Title</span>
+                  <span style={{ width: 100, textAlign: 'center' }}>Status</span>
+                  <span style={{ width: 60, textAlign: 'center' }}>Flag</span>
+                  <span style={{ width: 90, textAlign: 'right' }}>Review</span>
+                </div>
+
+                {qs.map((q, i) => {
+                  const isAnswered = answers[q.id] !== undefined;
+                  const isFlagged = flaggedQuestions.has(q.id);
+                  return (
+                    <div key={q.id} style={{
+                      display: 'flex', alignItems: 'center',
+                      padding: '10px 20px',
+                      borderBottom: i < qs.length - 1 ? '1px solid #f0f0f0' : 'none',
+                      fontSize: 14, fontFamily: "'Times New Roman', Times, serif",
                     }}>
-                      {isAnswered ? 'Completed' : 'Unseen'}
-                    </span>
-                    <span style={{ width: 100, textAlign: 'right' }}>
-                      <button
-                        onClick={() => setReviewQuestionIndex(i)}
-                        style={{
-                          padding: '6px 20px', borderRadius: 4,
-                          background: '#306ca0', border: 'none',
-                          cursor: 'pointer', fontSize: 13, fontWeight: 400,
-                          color: '#fff', fontFamily: "'Times New Roman', Times, serif",
-                        }}
-                      >
-                        Review
-                      </button>
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                      <span style={{ width: 60, fontWeight: 600, color: '#333' }}>
+                        {i + 1}
+                      </span>
+                      <span style={{
+                        flex: 1, color: '#555', overflow: 'hidden',
+                        textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {q.text?.replace(/\$[^$]+\$/g, '').substring(0, 60) || `Question ${i + 1}`}
+                      </span>
+                      <span style={{
+                        width: 100, textAlign: 'center', fontWeight: 600,
+                        color: isAnswered ? '#16a34a' : '#d97706',
+                      }}>
+                        {isAnswered ? 'Completed' : 'Unseen'}
+                      </span>
+                      <span style={{ width: 60, textAlign: 'center' }}>
+                        {isFlagged && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#d97706" stroke="#d97706" strokeWidth="2">
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                            <line x1="4" y1="22" x2="4" y2="15"/>
+                          </svg>
+                        )}
+                      </span>
+                      <span style={{ width: 90, textAlign: 'right' }}>
+                        <button
+                          onClick={() => setReviewQuestionIndex(i)}
+                          style={{
+                            padding: '5px 16px', borderRadius: 4,
+                            background: '#306ca0', border: 'none',
+                            cursor: 'pointer', fontSize: 12, fontWeight: 400,
+                            color: '#fff', fontFamily: "'Times New Roman', Times, serif",
+                          }}
+                        >
+                          Review
+                        </button>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
 
-            {/* Bottom buttons */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 24 }}>
-              <button
-                onClick={() => {
-                  const paperQs = selectedPaper!.questions as Question[];
-                  const details = paperQs.map((q, i) => ({
-                    qid: q.id,
-                    questionLabel: `Q${i + 1}`,
-                    text: q.text,
-                    timeMs: finalQuestionTimes[q.id] || 0,
-                    correctAnswer: q.answer,
-                    yourAnswer: answers[q.id] ?? null,
-                    isCorrect: answers[q.id] === q.answer,
-                  }));
-                  generateExamReport({
-                    paperTitle: selectedPaper!.title,
-                    paperDuration: selectedPaper!.duration_minutes,
-                    completedAt: new Date(),
-                    totalQuestions: paperQs.length,
-                    score: finalScore,
-                    maxScore: finalTotal,
-                    questionDetails: details,
-                  });
-                }}
-                style={{
-                  padding: '10px 32px', borderRadius: 4,
-                  background: '#306ca0', border: 'none',
-                  cursor: 'pointer', fontSize: 15, fontWeight: 400,
-                  color: '#fff', fontFamily: "'Times New Roman', Times, serif",
-                }}
-              >
-                Download Report (PDF)
-              </button>
-              <button
-                onClick={() => {
-                  setExamStarted(false);
-                  resetSession();
-                  setSelectedPaper(null);
-                  setReviewQuestionIndex(null);
-                }}
-                style={{
-                  padding: '10px 32px', borderRadius: 4,
-                  border: '1px solid #ccc', background: '#fff',
-                  cursor: 'pointer', fontSize: 15, fontWeight: 400,
-                  color: '#333', fontFamily: "'Times New Roman', Times, serif",
-                }}
-              >
-                Back to Papers
-              </button>
-            </div>
-
-            {/* Violations summary */}
-            <div style={{ marginTop: 16 }}>
-              <ViolationLog />
+              {/* Submit button */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+                <button
+                  onClick={() => setResultsView('score')}
+                  style={{
+                    padding: '10px 40px', borderRadius: 4,
+                    background: '#306ca0', border: 'none',
+                    cursor: 'pointer', fontSize: 15, fontWeight: 400,
+                    color: '#fff', fontFamily: "'Times New Roman', Times, serif",
+                  }}
+                >
+                  Submit
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    );
+      );
+    }
+
+    // Final Score Page
+    {
+      const pct = finalTotal > 0 ? Math.round((finalScore / finalTotal) * 100) : 0;
+      const gradeColor = pct >= 80 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626';
+      const gradeBg = pct >= 80 ? '#dcfce7' : pct >= 50 ? '#fef3c7' : '#fef2f2';
+      const gradeLabel = pct >= 80 ? 'Excellent' : pct >= 50 ? 'Good Effort' : 'Keep Practicing';
+
+      return (
+        <div style={{
+          fontFamily: "'Times New Roman', Times, serif",
+          userSelect: 'none', width: '100vw', height: '100vh',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          background: '#ffffff',
+        }}>
+          {/* Blue Top Bar */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '0 24px', height: 48, flexShrink: 0,
+            background: '#306ca0',
+          }}>
+            <span style={{
+              fontSize: 18, fontWeight: 400, color: '#ffffff',
+              fontFamily: "'Times New Roman', Times, serif",
+              letterSpacing: '0.3px',
+            }}>
+              Test of Mathematics for University Admission
+            </span>
+            <span style={{
+              fontSize: 15, fontWeight: 400, color: '#ffffff',
+              fontFamily: "'Times New Roman', Times, serif",
+            }}>
+              Results
+            </span>
+          </div>
+
+          <div style={{
+            flex: 1, overflowY: 'auto', display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            padding: 20, background: '#f5f5f5',
+          }}>
+            <div style={{ width: '100%', maxWidth: 640 }}>
+              {/* Score Circle */}
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <div style={{
+                  width: 140, height: 140, borderRadius: '50%', margin: '0 auto 16px',
+                  background: `conic-gradient(${gradeColor} ${pct}%, #e0e0e0 ${pct}%)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <div style={{
+                    width: 114, height: 114, borderRadius: '50%',
+                    background: '#fff',
+                    border: '2px solid #e0e0e0',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span style={{ fontSize: 32, fontWeight: 700, color: gradeColor, lineHeight: 1 }}>{pct}%</span>
+                    <span style={{ fontSize: 11, color: '#888', fontWeight: 500, marginTop: 2 }}>
+                      {finalScore}/{finalTotal} correct
+                    </span>
+                  </div>
+                </div>
+
+                <h1 style={{ margin: 0, fontSize: 22, fontWeight: 400, color: '#333', fontFamily: "'Times New Roman', Times, serif" }}>
+                  Exam Submitted
+                </h1>
+                <span style={{
+                  display: 'inline-block', marginTop: 6, padding: '3px 12px',
+                  borderRadius: 20, fontSize: 11, fontWeight: 600,
+                  background: gradeBg, color: gradeColor,
+                }}>
+                  {gradeLabel}
+                </span>
+                {sessionId && (
+                  <p style={{ color: '#aaa', fontSize: 11, marginTop: 8 }}>
+                    Session: {sessionId.slice(0, 8)}...
+                  </p>
+                )}
+              </div>
+
+              {/* Question Breakdown */}
+              <div style={{
+                background: '#fff', borderRadius: 8,
+                border: '1px solid #e0e0e0',
+                overflow: 'hidden', marginBottom: 16,
+              }}>
+                <div style={{
+                  padding: '12px 20px', fontSize: 13, fontWeight: 600, color: '#555',
+                  background: '#fafafa', borderBottom: '1px solid #e0e0e0',
+                  fontFamily: "'Times New Roman', Times, serif",
+                }}>
+                  Question Breakdown
+                </div>
+                {scoreDetails.map((d, i) => (
+                  <div key={d.qid} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 20px',
+                    borderBottom: i < scoreDetails.length - 1 ? '1px solid #f0f0f0' : 'none',
+                    cursor: 'pointer',
+                  }}
+                    onClick={() => setReviewQuestionIndex(i)}
+                  >
+                    <span style={{
+                      width: 24, height: 24, borderRadius: '50%', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', fontSize: 11,
+                      fontWeight: 700, flexShrink: 0,
+                      background: d.yours === d.correct ? '#dcfce7' : '#fef2f2',
+                      color: d.yours === d.correct ? '#16a34a' : '#dc2626',
+                    }}>
+                      {d.yours === d.correct ? '✓' : '✗'}
+                    </span>
+                    <span style={{
+                      flex: 1, fontSize: 12, color: '#555',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      Q{i + 1}: <MathText text={d.text} />
+                    </span>
+                    <span style={{ fontSize: 10, color: '#aaa', flexShrink: 0 }}>
+                      {d.yours !== null ? `You: ${String.fromCharCode(65 + d.yours)}` : 'Skipped'}
+                      {' · '}
+                      Ans: {String.fromCharCode(65 + d.correct)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button
+                  onClick={() => {
+                    const paperQs = selectedPaper!.questions as Question[];
+                    const details = paperQs.map((q, i) => ({
+                      qid: q.id,
+                      questionLabel: `Q${i + 1}`,
+                      text: q.text,
+                      timeMs: finalQuestionTimes[q.id] || 0,
+                      correctAnswer: q.answer,
+                      yourAnswer: answers[q.id] ?? null,
+                      isCorrect: answers[q.id] === q.answer,
+                    }));
+                    generateExamReport({
+                      paperTitle: selectedPaper!.title,
+                      paperDuration: selectedPaper!.duration_minutes,
+                      completedAt: new Date(),
+                      totalQuestions: paperQs.length,
+                      score: finalScore,
+                      maxScore: finalTotal,
+                      questionDetails: details,
+                    });
+                  }}
+                  style={{
+                    width: '100%', padding: '12px',
+                    background: '#306ca0',
+                    color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer',
+                    fontSize: 14, fontWeight: 400,
+                    fontFamily: "'Times New Roman', Times, serif",
+                  }}
+                >
+                  Download Report (PDF)
+                </button>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    onClick={() => setResultsView('table')}
+                    style={{
+                      flex: 1, padding: '12px',
+                      background: '#fff', color: '#333',
+                      border: '1px solid #ccc', borderRadius: 4,
+                      cursor: 'pointer', fontSize: 14, fontWeight: 400,
+                      fontFamily: "'Times New Roman', Times, serif",
+                    }}
+                  >
+                    Back to Results
+                  </button>
+                  <button
+                    onClick={() => { setExamStarted(false); resetSession(); setSelectedPaper(null); setReviewQuestionIndex(null); setResultsView('table'); }}
+                    style={{
+                      flex: 1, padding: '12px',
+                      background: '#fff', color: '#333',
+                      border: '1px solid #ccc', borderRadius: 4,
+                      cursor: 'pointer', fontSize: 14, fontWeight: 400,
+                      fontFamily: "'Times New Roman', Times, serif",
+                    }}
+                  >
+                    Back to Papers
+                  </button>
+                </div>
+              </div>
+
+              {/* Violations summary */}
+              <div style={{ marginTop: 16 }}>
+                <ViolationLog />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
   }
 
   // ---- Active Exam Screen ----
@@ -867,7 +1188,7 @@ export function ExamPage() {
       {/* ═══════════ Blue Top Bar ═══════════ */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 32px', height: 48, flexShrink: 0,
+        padding: '0 24px', height: 48, flexShrink: 0,
         background: '#306ca0',
       }}>
         <span style={{
@@ -877,113 +1198,34 @@ export function ExamPage() {
         }}>
           Test of Mathematics for University Admission
         </span>
-        {/* Timer on the right of top bar */}
-        <span style={{
-          fontSize: 18, fontWeight: 400, fontVariantNumeric: 'tabular-nums',
-          color: '#ffffff', fontFamily: "'Times New Roman', Times, serif",
-        }}>
-          Time: {minutes}:{seconds.toString().padStart(2, '0')}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <span
+            onClick={() => q && toggleFlag(q.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              cursor: 'pointer', userSelect: 'none',
+              color: '#ffffff', fontSize: 15, fontWeight: 400,
+              fontFamily: "'Times New Roman', Times, serif",
+              opacity: q && flaggedQuestions.has(q.id) ? 1 : 0.8,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={q && flaggedQuestions.has(q.id) ? '#fff' : 'none'} stroke="#fff" strokeWidth="2">
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+              <line x1="4" y1="22" x2="4" y2="15"/>
+            </svg>
+            Flag
+          </span>
+          <span style={{
+            fontSize: 15, fontWeight: 400, fontVariantNumeric: 'tabular-nums',
+            color: '#ffffff', fontFamily: "'Times New Roman', Times, serif",
+          }}>
+            Time: {minutes}:{seconds.toString().padStart(2, '0')}
+          </span>
+        </div>
       </div>
 
       {/* ═══════════ Main Content ═══════════ */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-
-        {/* ── Left Sidebar: Question Navigator ── */}
-        <div style={{
-          width: 260, flexShrink: 0,
-          display: 'flex', flexDirection: 'column',
-          background: '#f5f5f5',
-          borderRight: '1px solid #e0e0e0',
-          padding: '16px 14px',
-          gap: 12,
-        }}>
-          {/* Section header */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '0 4px',
-          }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#555', textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              Question Palette
-            </span>
-            <span style={{ fontSize: 11, color: '#888', fontWeight: 500 }}>
-              {answeredCount}/{questions.length}
-            </span>
-          </div>
-
-          {/* Legend */}
-          <div style={{ display: 'flex', gap: 12, padding: '0 4px', fontSize: 10, color: '#888' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 3, background: '#22c55e' }} />
-              Answered
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 3, background: '#e0e0e0', border: '1px solid #ccc' }} />
-              Pending
-            </span>
-          </div>
-
-          {/* Question grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(5, 1fr)',
-            gap: 6,
-            flex: 1, alignContent: 'start',
-            overflowY: 'auto',
-          }}>
-            {questions.map((_, i) => {
-              const isAnswered = answers[questions[i]?.id] !== undefined;
-              const isCurrent = currentQ === i;
-              return (
-                <button
-                  key={i}
-                  onClick={() => {
-                    if (i !== currentQ) {
-                      accumulateCurrentQTime();
-                      setCurrentQ(i);
-                      setSelected(answers[questions[i]?.id] ?? null);
-                      activeQStartRef.current = Date.now();
-                    }
-                  }}
-                  style={{
-                    aspectRatio: '1',
-                    border: isCurrent
-                      ? '2px solid #306ca0'
-                      : isAnswered
-                        ? '1px solid #22c55e'
-                        : '1px solid #d0d0d0',
-                    borderRadius: 6,
-                    background: isCurrent
-                      ? '#dbeafe'
-                      : isAnswered
-                        ? '#dcfce7'
-                        : '#fff',
-                    cursor: 'pointer',
-                    fontSize: 12, fontWeight: isCurrent ? 700 : 500,
-                    color: isCurrent ? '#1e40af' : isAnswered ? '#166534' : '#666',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.15s ease',
-                    position: 'relative' as const,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (i !== currentQ) {
-                      e.currentTarget.style.background = '#e5e7eb';
-                      e.currentTarget.style.borderColor = '#b0b0b0';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (i !== currentQ) {
-                      e.currentTarget.style.background = isAnswered ? '#dcfce7' : '#fff';
-                      e.currentTarget.style.borderColor = isAnswered ? '#22c55e' : '#d0d0d0';
-                    }
-                  }}
-                >
-                  {i + 1}
-                </button>
-              );
-            })}
-          </div>
-        </div>
 
         {/* ── Center: Question Content ── */}
         <div style={{
@@ -1010,7 +1252,7 @@ export function ExamPage() {
                 }}>
                   <span style={{
                     width: 32, height: 32, borderRadius: 8,
-                    background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                    background: '#306ca0',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: '#fff', fontSize: 13, fontWeight: 700, flexShrink: 0,
                   }}>
@@ -1043,20 +1285,20 @@ export function ExamPage() {
                             onClick={() => selectAnswer(q.id, i)}
                             style={{
                               width: 56, height: 56, borderRadius: '50%',
-                              border: isSel ? '3px solid #2563eb' : '2px solid #d1d5db',
+                              border: isSel ? '3px solid #306ca0' : '2px solid #d1d5db',
                               background: isSel
-                                ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
+                                ? '#306ca0'
                                 : '#fff',
                               color: isSel ? '#fff' : '#475569',
                               cursor: 'pointer', fontSize: 22, fontWeight: 700,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               transition: 'all 0.15s ease',
-                              boxShadow: isSel ? '0 4px 14px rgba(37,99,235,0.35)' : '0 1px 2px rgba(0,0,0,0.04)',
+                              boxShadow: isSel ? '0 4px 14px rgba(48,108,160,0.35)' : '0 1px 2px rgba(0,0,0,0.04)',
                               transform: isSel ? 'scale(1.05)' : 'scale(1)',
                             }}
                             onMouseEnter={(e) => {
                               if (!isSel) {
-                                e.currentTarget.style.borderColor = '#93c5fd';
+                                e.currentTarget.style.borderColor = '#306ca0';
                                 e.currentTarget.style.background = '#eff6ff';
                               }
                             }}
@@ -1093,17 +1335,17 @@ export function ExamPage() {
                               display: 'flex', alignItems: 'center', gap: 14,
                               padding: '14px 18px', width: '100%',
                               background: isSel
-                                ? 'linear-gradient(135deg, #eff6ff, #dbeafe)'
+                                ? '#eff6ff'
                                 : '#fff',
-                              border: `2px solid ${isSel ? '#3b82f6' : '#e5e7eb'}`,
+                              border: `2px solid ${isSel ? '#306ca0' : '#e5e7eb'}`,
                               borderRadius: 12, cursor: 'pointer',
                               textAlign: 'left' as const,
                               transition: 'all 0.15s ease',
-                              boxShadow: isSel ? '0 0 0 3px rgba(59,130,246,0.1)' : 'none',
+                              boxShadow: isSel ? '0 0 0 3px rgba(48,108,160,0.1)' : 'none',
                             }}
                             onMouseEnter={(e) => {
                               if (!isSel) {
-                                e.currentTarget.style.borderColor = '#93c5fd';
+                                e.currentTarget.style.borderColor = '#306ca0';
                                 e.currentTarget.style.background = '#f8faff';
                               }
                             }}
@@ -1116,10 +1358,8 @@ export function ExamPage() {
                           >
                             <span style={{
                               width: 40, height: 40, borderRadius: '50%',
-                              border: isSel ? '2px solid #2563eb' : '2px solid #d1d5db',
-                              background: isSel
-                                ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
-                                : '#f8fafc',
+                              border: isSel ? '2px solid #306ca0' : '2px solid #d1d5db',
+                              background: isSel ? '#306ca0' : '#f8fafc',
                               color: isSel ? '#fff' : '#64748b',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               fontSize: 16, fontWeight: 700, flexShrink: 0,
@@ -1128,7 +1368,7 @@ export function ExamPage() {
                               {letter}
                             </span>
                             <span style={{
-                              flex: 1, fontSize: 15, color: isSel ? '#1d4ed8' : '#374151',
+                              flex: 1, fontSize: 15, color: isSel ? '#306ca0' : '#374151',
                               fontWeight: isSel ? 600 : 400, lineHeight: 1.5,
                             }}>
                               <MathText text={opt} />
@@ -1143,77 +1383,77 @@ export function ExamPage() {
             )}
           </div>
 
-          {/* Bottom Navigation Bar */}
+          {/* Bottom Blue Bar */}
           <div style={{
-            display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
-            padding: '10px 24px', flexShrink: 0,
-            background: '#fff', borderTop: '1px solid #e0e0e0',
-            gap: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '0 24px', height: 48, flexShrink: 0,
+            background: '#306ca0',
           }}>
-            {/* Previous */}
-            <button
-              disabled={isFirstQ}
-              onClick={() => {
-                accumulateCurrentQTime();
-                setCurrentQ((c) => c - 1);
-                setSelected(answers[questions[currentQ - 1]?.id] ?? null);
-                activeQStartRef.current = Date.now();
-              }}
+            <span
+              onClick={() => setShowEndTestDialog(true)}
               style={{
-                padding: '8px 28px', borderRadius: 4,
-                border: '1px solid #ccc', background: '#fff',
-                cursor: isFirstQ ? 'default' : 'pointer',
-                opacity: isFirstQ ? 0.4 : 1,
-                fontSize: 15, fontWeight: 400, color: '#333',
+                color: '#ffffff', fontSize: 15, fontWeight: 400,
                 fontFamily: "'Times New Roman', Times, serif",
-                transition: 'all 0.15s ease',
+                cursor: 'pointer', userSelect: 'none',
               }}
             >
-              Previous
-            </button>
-
-            {/* Next / Submit */}
-            {!isLastQ ? (
-              <button
+              End Exam
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+              <span
                 onClick={() => {
-                  accumulateCurrentQTime();
-                  setCurrentQ((c) => c + 1);
-                  setSelected(answers[questions[currentQ + 1]?.id] ?? null);
-                  activeQStartRef.current = Date.now();
-                }}
-                style={{
-                  padding: '8px 28px', borderRadius: 4,
-                  background: '#306ca0',
-                  border: 'none', cursor: 'pointer',
-                  fontSize: 15, fontWeight: 400, color: '#fff',
-                  fontFamily: "'Times New Roman', Times, serif",
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  const unanswered = questions.filter((q) => answers[q.id] === undefined).length;
-                  if (unanswered > 0) {
-                    setShowEndTestDialog(true);
-                  } else {
-                    finishExam();
+                  if (!isFirstQ) {
+                    accumulateCurrentQTime();
+                    setCurrentQ((c) => c - 1);
+                    setSelected(answers[questions[currentQ - 1]?.id] ?? null);
+                    activeQStartRef.current = Date.now();
                   }
                 }}
                 style={{
-                  padding: '8px 28px', borderRadius: 4,
-                  background: '#306ca0',
-                  border: 'none', cursor: 'pointer',
-                  fontSize: 15, fontWeight: 400, color: '#fff',
+                  color: '#ffffff', fontSize: 15, fontWeight: 400,
                   fontFamily: "'Times New Roman', Times, serif",
-                  transition: 'all 0.15s ease',
+                  cursor: isFirstQ ? 'default' : 'pointer',
+                  opacity: isFirstQ ? 0.4 : 1,
+                  userSelect: 'none',
                 }}
               >
-                Submit
-              </button>
-            )}
+                Previous
+              </span>
+              <span
+                onClick={() => setShowNavigator(true)}
+                style={{
+                  color: '#ffffff', fontSize: 15, fontWeight: 400,
+                  fontFamily: "'Times New Roman', Times, serif",
+                  cursor: 'pointer', userSelect: 'none',
+                }}
+              >
+                Navigator
+              </span>
+              <span
+                onClick={() => {
+                  if (!isLastQ) {
+                    accumulateCurrentQTime();
+                    setCurrentQ((c) => c + 1);
+                    setSelected(answers[questions[currentQ + 1]?.id] ?? null);
+                    activeQStartRef.current = Date.now();
+                  } else {
+                    const unanswered = questions.filter((q) => answers[q.id] === undefined).length;
+                    if (unanswered > 0) {
+                      setShowEndTestDialog(true);
+                    } else {
+                      finishExam();
+                    }
+                  }
+                }}
+                style={{
+                  color: '#ffffff', fontSize: 15, fontWeight: 400,
+                  fontFamily: "'Times New Roman', Times, serif",
+                  cursor: 'pointer', userSelect: 'none',
+                }}
+              >
+                {isLastQ ? 'Submit' : 'Next'}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -1221,7 +1461,7 @@ export function ExamPage() {
         <div style={{
           width: 280, flexShrink: 0,
           display: 'flex', flexDirection: 'column', gap: 12,
-          padding: '16px 14px 16px 0',
+          padding: '16px 14px',
           background: '#f5f5f5',
           borderLeft: '1px solid #e0e0e0',
           overflowY: 'auto',
@@ -1267,6 +1507,128 @@ export function ExamPage() {
           50% { opacity: 0.4; }
         }
       `}</style>
+
+      {/* ── Navigator Popup ── */}
+      {showNavigator && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9998,
+        }}
+          onClick={() => setShowNavigator(false)}
+        >
+          <div style={{
+            background: '#fff', borderRadius: 12,
+            boxShadow: '0 8px 40px rgba(0,0,0,0.2)',
+            width: 480, maxWidth: '90vw', padding: 24,
+          }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: 16,
+            }}>
+              <h3 style={{
+                margin: 0, fontSize: 16, fontWeight: 600, color: '#333',
+                fontFamily: "'Times New Roman', Times, serif",
+              }}>
+                Question Palette
+              </h3>
+              <span style={{
+                fontSize: 12, color: '#888',
+                fontFamily: "'Times New Roman', Times, serif",
+              }}>
+                {answeredCount}/{questions.length} answered
+              </span>
+            </div>
+
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: 16, marginBottom: 14, fontSize: 11, color: '#888' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 2, background: '#22c55e' }} />
+                Answered
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 10, height: 10, borderRadius: 2, background: '#e0e0e0', border: '1px solid #ccc' }} />
+                Pending
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="#d97706" stroke="#d97706" strokeWidth="2">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                  <line x1="4" y1="22" x2="4" y2="15"/>
+                </svg>
+                Flagged
+              </span>
+            </div>
+
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)',
+              gap: 5,
+            }}>
+              {questions.map((_, i) => {
+                const qId = questions[i]?.id;
+                const isAnswered = answers[qId] !== undefined;
+                const isCurrent = currentQ === i;
+                const isFlagged = qId && flaggedQuestions.has(qId);
+                return (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (i !== currentQ) {
+                        accumulateCurrentQTime();
+                        setCurrentQ(i);
+                        setSelected(answers[qId] ?? null);
+                        activeQStartRef.current = Date.now();
+                      }
+                      setShowNavigator(false);
+                    }}
+                    style={{
+                      aspectRatio: '1',
+                      border: isCurrent
+                        ? '2px solid #306ca0'
+                        : isAnswered
+                          ? '1px solid #22c55e'
+                          : '1px solid #d0d0d0',
+                      borderRadius: 4,
+                      background: isCurrent
+                        ? '#dbeafe'
+                        : isAnswered
+                          ? '#dcfce7'
+                          : '#fff',
+                      cursor: 'pointer',
+                      fontSize: 12, fontWeight: isCurrent ? 700 : 500,
+                      color: isCurrent ? '#1e40af' : isAnswered ? '#166534' : '#666',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      position: 'relative' as const,
+                    }}
+                    title={isFlagged ? 'Flagged' : undefined}
+                  >
+                    {i + 1}
+                    {isFlagged && (
+                      <svg style={{ position: 'absolute', top: 1, right: 1 }} width="8" height="8" viewBox="0 0 24 24" fill="#d97706" stroke="#d97706" strokeWidth="2">
+                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setShowNavigator(false)}
+              style={{
+                width: '100%', marginTop: 16, padding: '8px',
+                background: '#306ca0', color: '#fff', border: 'none',
+                borderRadius: 4, cursor: 'pointer', fontSize: 14,
+                fontFamily: "'Times New Roman', Times, serif",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── End Test Dialog ── */}
       {showEndTestDialog && (
