@@ -6,7 +6,7 @@ import { StudentDetail } from './pages/StudentDetail';
 
 export default function App() {
   return (
-    <BrowserRouter basename="/oxbridge">
+    <BrowserRouter>
       <ProctorProvider>
         <Routes>
           <Route path="/" element={<ExamPage />} />

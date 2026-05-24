@@ -263,87 +263,191 @@ export function ExamPage() {
   }
 
   // ---- Paper Selection Screen ----
+  const paperColor = (paper: Paper) => {
+    if (paper.paper_number === 1) return { bg: '#eff6ff', accent: '#3b82f6', gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' };
+    return { bg: '#f0fdf4', accent: '#22c55e', gradient: 'linear-gradient(135deg, #22c55e, #15803d)' };
+  };
+
   if (!examStarted) {
     return (
-      <div style={{ maxWidth: 700, margin: '60px auto', fontFamily: 'system-ui, sans-serif', padding: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: '#9ca3af', marginRight: 12, alignSelf: 'center' }}>
-            {user?.email}
-          </span>
+      <div style={{ minHeight: '100vh', fontFamily: "'Inter', system-ui, sans-serif", background: '#f8fafc' }}>
+        {/* Top Nav */}
+        <div style={{
+          display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 16,
+          padding: '12px 32px', background: '#fff', borderBottom: '1px solid #e2e8f0',
+        }}>
+          <span style={{ fontSize: 13, color: '#64748b' }}>{user?.email}</span>
           <button
             onClick={() => supabase.auth.signOut()}
-            style={{ padding: '4px 12px', border: '1px solid #d1d5db', borderRadius: 5, background: '#fff', cursor: 'pointer', fontSize: 12, color: '#6b7280' }}
+            style={{
+              padding: '6px 16px', border: '1px solid #e2e8f0', borderRadius: 8,
+              background: '#fff', cursor: 'pointer', fontSize: 13, color: '#64748b',
+              fontWeight: 500, transition: 'all 0.2s',
+            }}
           >
             Sign Out
           </button>
         </div>
-        <h1 style={{ textAlign: 'center', marginBottom: 8 }}>TMUA Practice Papers</h1>
-        <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: 32 }}>
-          Select a paper to begin. Your exam will be proctored.
-        </p>
 
-        {fetchState === 'error' ? (
-          <div style={{ textAlign: 'center', padding: 40, background: '#fef2f2', borderRadius: 12, border: '1px solid #fecaca' }}>
-            <p style={{ color: '#dc2626', marginBottom: 8 }}>Failed to load papers</p>
-            <button onClick={retryFetch} style={{ padding: '6px 20px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Retry</button>
-          </div>
-        ) : fetchState === 'loading' && papers.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#9ca3af' }}>Loading papers...</p>
-        ) : papers.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, background: '#f9fafb', borderRadius: 12 }}>
-            <p style={{ color: '#6b7280' }}>No papers available yet.</p>
-            <p style={{ fontSize: 13, color: '#9ca3af' }}>
-              Run the SQL schema in your Supabase SQL Editor to seed sample papers.
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {papers.map((paper) => (
-              <div
-                key={paper.id}
-                onClick={() => setSelectedPaper(paper)}
-                style={{
-                  padding: 16,
-                  border: `2px solid ${selectedPaper?.id === paper.id ? '#2563eb' : '#e5e7eb'}`,
-                  borderRadius: 10,
-                  cursor: 'pointer',
-                  background: selectedPaper?.id === paper.id ? '#eff6ff' : '#fff',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: 16 }}>{paper.title}</h3>
-                    <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: 13 }}>
-                      Paper {paper.paper_number} &middot; {paper.sitting} {paper.year} &middot;{' '}
-                      {paper.duration_minutes} min &middot; {paper.total_marks} marks
-                    </p>
+        {/* Hero */}
+        <div style={{
+          textAlign: 'center', padding: '48px 24px 40px',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a5f 100%)',
+          color: '#fff',
+        }}>
+          <h1 style={{ margin: 0, fontSize: 36, fontWeight: 800, letterSpacing: -1 }}>
+            TMUA Practice Papers
+          </h1>
+          <p style={{ margin: '12px 0 0', color: '#94a3b8', fontSize: 16, fontWeight: 400 }}>
+            Select a paper to begin your proctored exam session
+          </p>
+          {papers.length > 0 && (
+            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 16 }}>
+              <div style={{
+                background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 24px',
+                border: '1px solid rgba(255,255,255,0.1)',
+              }}>
+                <div style={{ fontSize: 24, fontWeight: 700 }}>{papers.length}</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Papers</div>
+              </div>
+              <div style={{
+                background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 24px',
+                border: '1px solid rgba(255,255,255,0.1)',
+              }}>
+                <div style={{ fontSize: 24, fontWeight: 700 }}>
+                  {papers.reduce((s, p) => s + (p.questions as Question[]).length, 0)}
+                </div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Questions</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Paper List */}
+        <div style={{ maxWidth: 780, margin: '0 auto', padding: '24px 20px 60px' }}>
+          {fetchState === 'error' ? (
+            <div style={{ textAlign: 'center', padding: 40, background: '#fef2f2', borderRadius: 12, border: '1px solid #fecaca' }}>
+              <p style={{ color: '#dc2626', marginBottom: 8 }}>Failed to load papers</p>
+              <button onClick={retryFetch} style={{ padding: '6px 20px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Retry</button>
+            </div>
+          ) : fetchState === 'loading' && papers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>&#8987;</div>
+              <p>Loading papers...</p>
+            </div>
+          ) : papers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 60, background: '#fff', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+              <p style={{ color: '#64748b' }}>No papers available yet.</p>
+              <p style={{ fontSize: 13, color: '#94a3b8' }}>
+                Run the SQL schema in your Supabase SQL Editor to seed sample papers.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {papers.map((paper) => {
+                const colors = paperColor(paper);
+                const isSelected = selectedPaper?.id === paper.id;
+                const qCount = (paper.questions as Question[]).length;
+                return (
+                  <div
+                    key={paper.id}
+                    onClick={() => setSelectedPaper(paper)}
+                    style={{
+                      display: 'flex', alignItems: 'stretch', borderRadius: 14,
+                      cursor: 'pointer', overflow: 'hidden',
+                      background: '#fff',
+                      border: `2px solid ${isSelected ? colors.accent : '#e2e8f0'}`,
+                      boxShadow: isSelected
+                        ? `0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px ${colors.accent}`
+                        : '0 1px 3px rgba(0,0,0,0.04)',
+                      transition: 'all 0.2s ease',
+                      transform: isSelected ? 'translateY(-2px)' : 'none',
+                    }}
+                  >
+                    {/* Year Badge */}
+                    <div style={{
+                      minWidth: 80, display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                      background: colors.gradient, color: '#fff', padding: '16px 20px',
+                      fontWeight: 700,
+                    }}>
+                      <div style={{ fontSize: 28, lineHeight: 1 }}>{paper.year}</div>
+                      <div style={{ fontSize: 11, opacity: 0.85, marginTop: 4 }}>Paper {paper.paper_number}</div>
+                    </div>
+
+                    {/* Content */}
+                    <div style={{ flex: 1, padding: '16px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b' }}>
+                        {paper.title}
+                      </h3>
+                      <div style={{ display: 'flex', gap: 16, marginTop: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          &#9200; {paper.duration_minutes} min
+                        </span>
+                        <span style={{ fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          &#9998; {paper.total_marks} marks
+                        </span>
+                        <span style={{ fontSize: 12, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          &#128214; {qCount} questions
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Arrow */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', paddingRight: 16,
+                      color: isSelected ? colors.accent : '#cbd5e1',
+                      fontSize: 20, transition: 'all 0.2s',
+                    }}>
+                      &#8250;
+                    </div>
                   </div>
-                  <span style={{ fontSize: 13, color: '#2563eb', fontWeight: 600 }}>
-                    {(paper.questions as Question[]).length} questions
-                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Rules + Start */}
+          {selectedPaper && (
+            <div style={{ marginTop: 28 }}>
+              <div style={{
+                background: '#fff', borderRadius: 14, padding: '20px 24px',
+                border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              }}>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: 15, fontWeight: 600, color: '#1e293b' }}>
+                  Exam Rules
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }}>
+                  {[
+                    { icon: '&#127758;', text: 'Do not switch tabs or windows' },
+                    { icon: '&#128248;', text: 'Keep your face visible in camera' },
+                    { icon: '&#128683;', text: 'No copy/paste or right-click' },
+                    { icon: '&#9974;', text: 'Stay in fullscreen mode' },
+                  ].map((rule, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#475569' }}>
+                      <span dangerouslySetInnerHTML={{ __html: rule.icon }} />
+                      <span>{rule.text}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-
-        {selectedPaper && (
-          <div style={{ marginTop: 24, textAlign: 'center' }}>
-            <ul style={{ textAlign: 'left', display: 'inline-block', color: '#6b7280', fontSize: 14 }}>
-              <li>Do not switch tabs or windows</li>
-              <li>Keep your face visible in the camera</li>
-              <li>No copy/paste or right-click</li>
-              <li>Stay in fullscreen mode</li>
-            </ul>
-            <br />
-            <button
-              onClick={() => setShowPreCheck(true)}
-              style={{ marginTop: 12, padding: '12px 40px', fontSize: 18, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-            >
-              Setup & Start {selectedPaper.title}
-            </button>
-          </div>
-        )}
+              <div style={{ textAlign: 'center', marginTop: 20 }}>
+                <button
+                  onClick={() => setShowPreCheck(true)}
+                  style={{
+                    padding: '14px 48px', fontSize: 17, fontWeight: 600,
+                    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                    color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(37,99,235,0.35)',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Setup & Start {selectedPaper.title}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -354,23 +458,24 @@ export function ExamPage() {
     const gradeColor = pct >= 80 ? '#16a34a' : pct >= 50 ? '#f59e0b' : '#ef4444';
 
     return (
-      <div style={{ maxWidth: 600, margin: '40px auto', fontFamily: 'system-ui, sans-serif', padding: 20 }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+      <div style={{ maxWidth: 620, margin: '40px auto', fontFamily: "'Inter', system-ui, sans-serif", padding: 20 }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{
-            width: 120, height: 120, borderRadius: '50%', margin: '0 auto 16px',
-            background: `conic-gradient(${gradeColor} ${pct}%, #e5e7eb ${pct}%)`,
+            width: 140, height: 140, borderRadius: '50%', margin: '0 auto 20px',
+            background: `conic-gradient(${gradeColor} ${pct}%, #e2e8f0 ${pct}%)`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
           }}>
             <div style={{
-              width: 100, height: 100, borderRadius: '50%', background: '#fff',
+              width: 116, height: 116, borderRadius: '50%', background: '#fff',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             }}>
-              <span style={{ fontSize: 28, fontWeight: 700, color: gradeColor }}>{pct}%</span>
-              <span style={{ fontSize: 12, color: '#6b7280' }}>{finalScore}/{finalTotal} correct</span>
+              <span style={{ fontSize: 32, fontWeight: 800, color: gradeColor }}>{pct}%</span>
+              <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>{finalScore}/{finalTotal} correct</span>
             </div>
           </div>
-          <h1 style={{ margin: 0, fontSize: 22 }}>Exam Submitted</h1>
-          {sessionId && <p style={{ color: '#9ca3af', fontSize: 12 }}>Session: {sessionId}</p>}
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#1e293b' }}>Exam Submitted</h1>
+          {sessionId && <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 4 }}>Session: {sessionId}</p>}
         </div>
 
         {/* Per-question breakdown */}
@@ -427,14 +532,24 @@ export function ExamPage() {
               questionDetails: details,
             });
           }}
-          style={{ width: '100%', padding: '10px', marginBottom: 12, background: '#059669', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 15 }}
+          style={{
+            width: '100%', padding: '12px', marginBottom: 10,
+            background: 'linear-gradient(135deg, #059669, #047857)', color: '#fff',
+            border: 'none', borderRadius: 12, cursor: 'pointer', fontSize: 15,
+            fontWeight: 600, boxShadow: '0 2px 10px rgba(5,150,105,0.3)',
+            transition: 'all 0.2s',
+          }}
         >
           Download Report (PDF)
         </button>
 
         <button
           onClick={() => { setExamStarted(false); resetSession(); setSelectedPaper(null); }}
-          style={{ width: '100%', padding: '10px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 15 }}
+          style={{
+            width: '100%', padding: '12px', background: '#fff', color: '#475569',
+            border: '1px solid #e2e8f0', borderRadius: 12, cursor: 'pointer', fontSize: 15,
+            fontWeight: 500, transition: 'all 0.2s',
+          }}
         >
           Back to Papers
         </button>
@@ -449,25 +564,39 @@ export function ExamPage() {
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const answeredCount = Object.keys(answers).length;
+  const progressPct = questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0;
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', userSelect: 'none', width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxSizing: 'border-box' }}>
+    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", userSelect: 'none', width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxSizing: 'border-box', background: '#f1f5f9' }}>
       <TabSwitchDetector />
       <ViolationAlert />
 
-      {/* ── Top Bar ── */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 24px', borderBottom: '1px solid #e5e7eb', background: '#fff', gap: 20, flexShrink: 0 }}>
-        <div style={{ flex: 1 }}>
-          <h2 style={{ margin: 0, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedPaper?.title}</h2>
-          <p style={{ margin: '1px 0 0', color: '#6b7280', fontSize: 12 }}>
-            Q{currentQ + 1} of {questions.length} &middot; {answeredCount} answered
-          </p>
+      {/* ── Dark Top Bar ── */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 24px', background: '#0f172a', color: '#fff', gap: 20, flexShrink: 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#f1f5f9' }}>{selectedPaper?.title}</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>
+              Q{currentQ + 1} of {questions.length}
+            </span>
+            <span style={{ color: '#334155', fontSize: 11 }}>|</span>
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>
+              {answeredCount} answered
+            </span>
+            {/* Mini progress bar */}
+            <div style={{ flex: 1, maxWidth: 120, height: 3, background: '#334155', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${progressPct}%`, background: '#22c55e', borderRadius: 2, transition: 'width 0.3s' }} />
+            </div>
+          </div>
         </div>
 
         <div style={{
-          fontSize: 32, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
-          color: timeLeft < 60 ? '#ef4444' : '#111', letterSpacing: 1,
-          background: '#f9fafb', padding: '4px 20px', borderRadius: 10,
+          fontSize: 34, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
+          color: timeLeft < 60 ? '#f87171' : '#f8fafc', letterSpacing: 2,
+          background: timeLeft < 60 ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.08)',
+          padding: '6px 24px', borderRadius: 10, minWidth: 120, textAlign: 'center',
+          transition: 'color 0.5s, background 0.5s',
+          border: `1px solid ${timeLeft < 60 ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.1)'}`,
         }}>
           {minutes}:{seconds.toString().padStart(2, '0')}
         </div>
@@ -478,11 +607,11 @@ export function ExamPage() {
         {/* Left: Question + Options */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
           {/* Scrollable question area */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', background: '#f1f5f9' }}>
             {q && (
               <div style={{
-                background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
-                overflow: 'hidden',
+                background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14,
+                overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
               }}>
                 {q.image_url ? (
                   <>
@@ -549,8 +678,8 @@ export function ExamPage() {
           {/* Fixed Bottom Nav Bar */}
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '12px 24px', borderTop: '1px solid #e5e7eb', background: '#fff',
-            flexShrink: 0,
+            padding: '14px 24px', background: '#fff', flexShrink: 0,
+            borderTop: '1px solid #e2e8f0', gap: 16,
           }}>
             <button
               disabled={currentQ === 0}
@@ -561,18 +690,35 @@ export function ExamPage() {
                 activeQStartRef.current = Date.now();
               }}
               style={{
-                padding: '10px 20px', border: '1px solid #d1d5db', borderRadius: 8,
+                padding: '10px 22px', border: '1px solid #e2e8f0', borderRadius: 10,
                 background: '#fff', cursor: currentQ === 0 ? 'default' : 'pointer',
-                opacity: currentQ === 0 ? 0.4 : 1, fontSize: 14, fontWeight: 500,
-                display: 'flex', alignItems: 'center', gap: 4,
+                opacity: currentQ === 0 ? 0.35 : 1, fontSize: 14, fontWeight: 500,
+                display: 'flex', alignItems: 'center', gap: 6, color: '#334155',
+                transition: 'all 0.15s',
               }}
             >
               ← Previous
             </button>
 
-            <span style={{ fontSize: 13, color: '#9ca3af' }}>
-              {currentQ + 1} / {questions.length}
-            </span>
+            {/* Center page indicator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#64748b' }}>
+              {Array.from({ length: Math.min(questions.length, 20) }).map((_, i) => {
+                const start = Math.max(0, Math.min(currentQ - 3, questions.length - 7));
+                const end = Math.min(questions.length, start + 7);
+                if (questions.length <= 7) {
+                  const isAnswered = answers[questions[i]?.id] !== undefined;
+                  return (
+                    <div key={i} style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: i === currentQ ? '#3b82f6' : isAnswered ? '#22c55e' : '#cbd5e1',
+                      transition: 'all 0.2s',
+                    }} />
+                  );
+                }
+                return null;
+              })}
+              <span style={{ fontWeight: 500, fontSize: 12 }}>{currentQ + 1}/{questions.length}</span>
+            </div>
 
             {currentQ < questions.length - 1 ? (
               <button
@@ -583,9 +729,11 @@ export function ExamPage() {
                   activeQStartRef.current = Date.now();
                 }}
                 style={{
-                  padding: '10px 28px', background: '#2563eb', color: '#fff',
-                  border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600,
-                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '10px 28px', background: '#3b82f6', color: '#fff',
+                  border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  boxShadow: '0 2px 8px rgba(59,130,246,0.3)',
+                  transition: 'all 0.15s',
                 }}
               >
                 Next →
@@ -594,8 +742,10 @@ export function ExamPage() {
               <button
                 onClick={finishExam}
                 style={{
-                  padding: '10px 28px', background: '#16a34a', color: '#fff',
-                  border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14,
+                  padding: '10px 28px', background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: '#fff',
+                  border: 'none', borderRadius: 10, cursor: 'pointer', fontWeight: 600, fontSize: 14,
+                  boxShadow: '0 2px 10px rgba(34,197,94,0.35)',
+                  transition: 'all 0.15s',
                 }}
               >
                 Submit Exam
@@ -606,18 +756,18 @@ export function ExamPage() {
 
         {/* Right Panel: Webcam + Question Navigator */}
         <div style={{
-          flex: '0 0 230px', width: 230,
+          flex: '0 0 240px', width: 240,
           display: 'flex', flexDirection: 'column', gap: 12,
-          padding: '16px 16px 16px 0',
-          borderLeft: '1px solid #e5e7eb', background: '#fafafa',
+          padding: '14px 14px 14px 0',
+          background: '#f8fafc',
           overflowY: 'auto',
         }}>
           {/* Webcam */}
           <div style={{
-            background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb',
-            padding: 8,
+            background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0',
+            padding: 10, boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
           }}>
-            <p style={{ margin: '0 0 6px 0', fontSize: 11, color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
+            <p style={{ margin: '0 0 8px 0', fontSize: 10, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, textAlign: 'center' }}>
               Camera
             </p>
             <WebcamCapture />
@@ -625,44 +775,62 @@ export function ExamPage() {
 
           {/* Question Navigator */}
           <div style={{
-            background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb',
-            padding: 12,
+            background: '#fff', borderRadius: 12, border: '1px solid #e2e8f0',
+            padding: 14, boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
           }}>
-            <p style={{ margin: '0 0 10px 0', fontSize: 11, color: '#9ca3af', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' }}>
+            <p style={{ margin: '0 0 10px 0', fontSize: 10, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, textAlign: 'center' }}>
               Questions
             </p>
+            {/* Legend */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 10, fontSize: 10, color: '#94a3b8' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} /> Answered
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#cbd5e1', display: 'inline-block' }} /> Pending
+              </span>
+            </div>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: 6,
+              gridTemplateColumns: 'repeat(5, 1fr)',
+              gap: 5,
             }}>
-              {questions.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    if (i !== currentQ) {
-                      accumulateCurrentQTime();
-                      setCurrentQ(i);
-                      setSelected(answers[questions[i]?.id] ?? null);
-                      activeQStartRef.current = Date.now();
-                    }
-                  }}
-                  style={{
-                    aspectRatio: '1',
-                    border: currentQ === i ? '2px solid #2563eb' : '1px solid #e5e7eb',
-                    borderRadius: 6,
-                    background: answers[questions[i]?.id] !== undefined
-                      ? (currentQ === i ? '#dbeafe' : '#eff6ff')
-                      : (currentQ === i ? '#fff' : '#fff'),
-                    cursor: 'pointer', fontSize: 14, fontWeight: currentQ === i ? 700 : 500,
-                    color: currentQ === i ? '#2563eb' : '#374151',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {i + 1}
-                </button>
-              ))}
+              {questions.map((_, i) => {
+                const isAnswered = answers[questions[i]?.id] !== undefined;
+                const isCurrent = currentQ === i;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (i !== currentQ) {
+                        accumulateCurrentQTime();
+                        setCurrentQ(i);
+                        setSelected(answers[questions[i]?.id] ?? null);
+                        activeQStartRef.current = Date.now();
+                      }
+                    }}
+                    style={{
+                      aspectRatio: '1',
+                      border: isCurrent ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                      borderRadius: 8,
+                      background: isCurrent ? '#eff6ff' : isAnswered ? '#f0fdf4' : '#fff',
+                      cursor: 'pointer', fontSize: 12, fontWeight: isCurrent ? 700 : 500,
+                      color: isCurrent ? '#3b82f6' : '#475569',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.15s',
+                      position: 'relative' as const,
+                    }}
+                  >
+                    {i + 1}
+                    {isAnswered && !isCurrent && (
+                      <span style={{
+                        position: 'absolute', bottom: 2, right: 3,
+                        width: 4, height: 4, borderRadius: '50%', background: '#22c55e',
+                      }} />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
