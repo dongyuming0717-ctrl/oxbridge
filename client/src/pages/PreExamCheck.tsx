@@ -250,7 +250,7 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
             <div style={{ flex: 1, height: 8, borderRadius: 4, background: '#e0e0e0', overflow: 'hidden' }}>
               <div ref={micMeterRef} style={{
                 height: '100%', borderRadius: 4, width: '0%',
-                background: 'linear-gradient(90deg, #22c55e, #4ade80)', transition: 'width 0.1s',
+                background: '#306ca0', transition: 'width 0.1s',
               }} />
             </div>
             <span style={{ marginLeft: 14, fontSize: 12, color: micOk ? '#16a34a' : '#aaa', minWidth: 70, textAlign: 'right', fontWeight: 500 }}>
@@ -314,7 +314,7 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
             borderRadius: 4, cursor: allOk ? 'pointer' : 'not-allowed',
             fontSize: 17, fontWeight: 400,
             fontFamily: "'Times New Roman', Times, serif",
-            boxShadow: allOk ? '0 2px 8px rgba(48,108,160,0.3)' : 'none',
+            boxShadow: 'none',
             transition: 'all 0.2s',
           }}
         >

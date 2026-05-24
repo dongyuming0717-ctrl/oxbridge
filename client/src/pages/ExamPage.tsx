@@ -413,8 +413,8 @@ export function ExamPage() {
 
   // ---- Paper Selection Screen ----
   const paperColor = (paper: Paper) => {
-    if (paper.paper_number === 1) return { bg: '#eff6ff', accent: '#306ca0', gradient: 'linear-gradient(135deg, #306ca0, #1e5a8a)' };
-    return { bg: '#f0fdf4', accent: '#22c55e', gradient: 'linear-gradient(135deg, #22c55e, #15803d)' };
+    if (paper.paper_number === 1) return { bg: '#eff6ff', accent: '#306ca0', badgeBg: '#306ca0' };
+    return { bg: '#f0fdf4', accent: '#306ca0', badgeBg: '#306ca0' };
   };
 
   if (!examStarted) {
@@ -511,9 +511,7 @@ export function ExamPage() {
                       cursor: 'pointer', overflow: 'hidden',
                       background: isSelected ? '#eff6ff' : '#fff',
                       border: `1.5px solid ${isSelected ? colors.accent : '#e0e0e0'}`,
-                      boxShadow: isSelected
-                        ? `0 0 0 1px ${colors.accent}, 0 2px 12px rgba(0,0,0,0.06)`
-                        : '0 1px 3px rgba(0,0,0,0.04)',
+                      boxShadow: 'none',
                       transition: 'all 0.2s ease',
                       transform: isSelected ? 'translateY(-1px)' : 'none',
                     }}
@@ -522,7 +520,7 @@ export function ExamPage() {
                     <div style={{
                       minWidth: 84, display: 'flex', flexDirection: 'column',
                       alignItems: 'center', justifyContent: 'center',
-                      background: colors.gradient, color: '#fff', padding: '18px 22px',
+                      background: colors.accent, color: '#fff', padding: '18px 22px',
                       fontWeight: 700,
                     }}>
                       <div style={{ fontSize: 28, lineHeight: 1 }}>{paper.year}</div>
@@ -1013,7 +1011,7 @@ export function ExamPage() {
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <div style={{
                   width: 140, height: 140, borderRadius: '50%', margin: '0 auto 16px',
-                  background: `conic-gradient(${gradeColor} ${pct}%, #e0e0e0 ${pct}%)`,
+                  background: gradeColor,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   <div style={{
@@ -1240,7 +1238,7 @@ export function ExamPage() {
               <div style={{
                 background: '#fff', borderRadius: 16,
                 border: '1px solid #e2e8f0',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                boxShadow: 'none',
                 overflow: 'hidden',
               }}>
                 {/* Question header */}
@@ -1293,7 +1291,7 @@ export function ExamPage() {
                               cursor: 'pointer', fontSize: 22, fontWeight: 700,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               transition: 'all 0.15s ease',
-                              boxShadow: isSel ? '0 4px 14px rgba(48,108,160,0.35)' : '0 1px 2px rgba(0,0,0,0.04)',
+                              boxShadow: 'none',
                               transform: isSel ? 'scale(1.05)' : 'scale(1)',
                             }}
                             onMouseEnter={(e) => {
@@ -1341,7 +1339,7 @@ export function ExamPage() {
                               borderRadius: 12, cursor: 'pointer',
                               textAlign: 'left' as const,
                               transition: 'all 0.15s ease',
-                              boxShadow: isSel ? '0 0 0 3px rgba(48,108,160,0.1)' : 'none',
+                              boxShadow: 'none',
                             }}
                             onMouseEnter={(e) => {
                               if (!isSel) {
@@ -1481,7 +1479,7 @@ export function ExamPage() {
               <div style={{
                 width: 8, height: 8, borderRadius: '50%',
                 background: '#ef4444',
-                boxShadow: '0 0 6px rgba(239,68,68,0.5)',
+                boxShadow: 'none',
                 animation: 'pulse 2s infinite',
               }} />
               <span style={{ fontSize: 10, fontWeight: 600, color: '#666', textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -1520,7 +1518,7 @@ export function ExamPage() {
         >
           <div style={{
             background: '#fff', borderRadius: 12,
-            boxShadow: '0 8px 40px rgba(0,0,0,0.2)',
+            boxShadow: 'none',
             width: 480, maxWidth: '90vw', padding: 24,
           }}
             onClick={(e) => e.stopPropagation()}
@@ -1640,7 +1638,7 @@ export function ExamPage() {
         }}>
           <div style={{
             background: '#fff', borderRadius: 12,
-            boxShadow: '0 8px 40px rgba(0,0,0,0.2)',
+            boxShadow: 'none',
             width: 480, maxWidth: '90vw',
             overflow: 'hidden',
           }}>

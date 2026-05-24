@@ -159,7 +159,7 @@ export function WebcamCapture() {
   if (status !== 'active') return null;
 
   return (
-    <div style={{ position: 'relative', width: '100%', borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+    <div style={{ position: 'relative', width: '100%', borderRadius: 8, overflow: 'hidden', boxShadow: 'none' }}>
       <video
         ref={videoRef as React.RefObject<HTMLVideoElement>}
         autoPlay

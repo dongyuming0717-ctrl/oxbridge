@@ -65,7 +65,7 @@ export function ViolationAlert() {
         style={{
           background: '#fff', borderRadius: 16, padding: '28px 32px',
           maxWidth: 420, width: '90%', textAlign: 'center',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          boxShadow: 'none',
         }}
       >
         <div style={{
