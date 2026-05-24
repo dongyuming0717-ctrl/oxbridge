@@ -302,7 +302,7 @@ export function ExamPage() {
         </div>
 
         {/* Content */}
-        <div style={{ maxWidth: 700, margin: '0 auto', padding: '48px 20px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '48px 20px' }}>
           <h1 style={{
             fontSize: 22, fontWeight: 400, color: '#333',
             fontFamily: "'Times New Roman', Times, serif",
@@ -449,7 +449,7 @@ export function ExamPage() {
         </div>
 
         {/* Content area */}
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px 60px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 60px' }}>
           <h1 style={{
             margin: '0 0 8px 0', fontSize: 24, fontWeight: 400, color: '#333',
             fontFamily: "'Times New Roman', Times, serif",
@@ -1006,7 +1006,7 @@ export function ExamPage() {
             alignItems: 'center', justifyContent: 'center',
             padding: 20, background: '#f5f5f5',
           }}>
-            <div style={{ width: '100%', maxWidth: 640 }}>
+            <div style={{ width: '100%', maxWidth: 800 }}>
               {/* Score Circle */}
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <div style={{
