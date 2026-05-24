@@ -14,36 +14,52 @@ const LABELS: Record<ViolationType, string> = {
   scroll_away: 'Scroll Away',
 };
 
-const COLORS: Record<string, string> = {
-  tab_blur: '#f59e0b',
-  window_blur: '#f59e0b',
-  fullscreen_exit: '#ef4444',
-  face_missing: '#ef4444',
-  multiple_faces: '#ef4444',
-  copy_attempt: '#f59e0b',
-  right_click: '#f59e0b',
-  tab_switch: '#f59e0b',
-  no_face: '#ef4444',
-  scroll_away: '#f59e0b',
-};
-
 export function ViolationLog() {
   const { violations } = useProctor();
 
-  if (violations.length === 0) return null;
+  if (violations.length === 0) {
+    return (
+      <div style={{
+        padding: 14, borderRadius: 8,
+        background: '#fff',
+        border: '1px solid #e0e0e0',
+        textAlign: 'center',
+      }}>
+        <div style={{ fontSize: 11, color: '#888', fontWeight: 500, textTransform: 'uppercase', letterSpacing: 1 }}>
+          No Violations
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 10, background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca' }}>
-      <h3 style={{ margin: '0 0 6px 0', fontSize: 12, color: '#dc2626', fontWeight: 600 }}>
-        Violations ({violations.length})
-      </h3>
-      <ul style={{ margin: 0, paddingLeft: 18, fontSize: 11, maxHeight: 120, overflowY: 'auto' }}>
+    <div style={{
+      padding: 14, borderRadius: 8,
+      background: '#fef2f2',
+      border: '1px solid #fecaca',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 8,
+      }}>
+        <span style={{ fontSize: 10, fontWeight: 600, color: '#dc2626', textTransform: 'uppercase', letterSpacing: 1 }}>
+          Violations
+        </span>
+        <span style={{
+          fontSize: 12, fontWeight: 700, color: '#dc2626',
+          background: '#fee2e2', borderRadius: 6,
+          padding: '2px 8px',
+        }}>
+          {violations.length}
+        </span>
+      </div>
+      <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, maxHeight: 160, overflowY: 'auto' }}>
         {violations.map((v, i) => (
-          <li key={i} style={{ marginBottom: 4 }}>
-            <span style={{ fontWeight: 600, color: COLORS[v.type] || '#dc2626' }}>
+          <li key={i} style={{ marginBottom: 5, color: '#888' }}>
+            <span style={{ fontWeight: 600, color: '#dc2626' }}>
               {LABELS[v.type] || v.type}
             </span>
-            {v.detail && <span style={{ color: '#6b7280' }}> — {v.detail}</span>}
+            {v.detail && <span style={{ color: '#aaa' }}> — {v.detail}</span>}
           </li>
         ))}
       </ul>

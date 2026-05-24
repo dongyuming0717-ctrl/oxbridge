@@ -47,10 +47,10 @@ export function StudentAuth() {
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: '80px auto', fontFamily: 'system-ui, sans-serif', padding: 20 }}>
+    <div style={{ maxWidth: 420, margin: '80px auto', fontFamily: "'Times New Roman', Times, serif", padding: 20 }}>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <h1 style={{ margin: 0, fontSize: 24 }}>TMUA Practice Papers</h1>
-        <p style={{ color: '#6b7280', marginTop: 6, fontSize: 14 }}>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 400, color: '#333' }}>TMUA Practice Papers</h1>
+        <p style={{ color: '#888', marginTop: 6, fontSize: 14 }}>
           {mode === 'login' ? 'Sign in to begin your exam' : 'Create an account to get started'}
         </p>
       </div>
@@ -132,9 +132,9 @@ export function StudentAuth() {
           type="submit"
           disabled={loading}
           style={{
-            width: '100%', padding: '12px', background: loading ? '#93c5fd' : '#2563eb',
-            color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer',
-            fontSize: 15, fontWeight: 600, marginTop: 4,
+            width: '100%', padding: '12px', background: loading ? '#93c5fd' : '#306ca0',
+            color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer',
+            fontSize: 15, fontWeight: 400,
           }}
         >
           {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
@@ -143,9 +143,9 @@ export function StudentAuth() {
 
       <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#6b7280' }}>
         {mode === 'login' ? (
-          <>Don't have an account? <button onClick={() => { setMode('register'); setError(''); setSuccess(''); }} style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>Register</button></>
+          <>Don't have an account? <button onClick={() => { setMode('register'); setError(''); setSuccess(''); }} style={{ background: 'none', border: 'none', color: '#306ca0', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>Register</button></>
         ) : (
-          <>Already have an account? <button onClick={() => { setMode('login'); setError(''); setSuccess(''); }} style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>Sign In</button></>
+          <>Already have an account? <button onClick={() => { setMode('login'); setError(''); setSuccess(''); }} style={{ background: 'none', border: 'none', color: '#306ca0', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>Sign In</button></>
         )}
       </p>
     </div>

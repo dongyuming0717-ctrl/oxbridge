@@ -99,8 +99,9 @@ export function ViolationAlert() {
         <button
           onClick={() => setAlert(null)}
           style={{
-            padding: '8px 32px', background: '#dc2626', color: '#fff',
-            border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600,
+            padding: '8px 32px', background: '#306ca0', color: '#fff',
+            border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 14, fontWeight: 400,
+            fontFamily: "'Times New Roman', Times, serif",
           }}
         >
           I Understand
