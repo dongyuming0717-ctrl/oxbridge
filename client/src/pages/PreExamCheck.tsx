@@ -31,20 +31,23 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
   }, []);
 
   // Camera check
-  const requestCamera = useCallback(async () => {
+  const requestCamera = useCallback(() => {
     setCameraError('');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: 'user' },
-        audio: false,
-      });
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach((t) => t.stop());
+      cameraStreamRef.current = null;
+    }
+    navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480, facingMode: 'user' },
+      audio: false,
+    }).then((stream) => {
       cameraStreamRef.current = stream;
       if (cameraVideoRef.current) {
         cameraVideoRef.current.srcObject = stream;
-        await cameraVideoRef.current.play();
+        cameraVideoRef.current.play().catch(() => {});
       }
       setCameraOk(true);
-    } catch (err: any) {
+    }).catch((err: any) => {
       const name = err?.name || '';
       if (name === 'NotAllowedError') {
         setCameraError('Camera permission was denied. Open browser site settings and allow camera access, then reload.');
@@ -55,17 +58,24 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
       } else {
         setCameraError(`Camera error: ${err?.message || 'Unknown error'}. Make sure you are using an external browser (Chrome/Safari/Edge), not VSCode built-in browser.`);
       }
-    }
+    });
   }, []);
 
   // Mic check with volume meter
-  const requestMic = useCallback(async () => {
+  const requestMic = useCallback(() => {
     setMicError('');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
-      });
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach((t) => t.stop());
+      micStreamRef.current = null;
+    }
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close();
+      audioCtxRef.current = null;
+    }
+    navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: false,
+    }).then((stream) => {
       micStreamRef.current = stream;
 
       // Set up audio level meter
@@ -92,7 +102,7 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
         };
         animate();
       }
-    } catch (err: any) {
+    }).catch((err: any) => {
       const name = err?.name || '';
       if (name === 'NotAllowedError') {
         setMicError('Microphone permission was denied. Open browser site settings and allow microphone access.');
@@ -101,7 +111,7 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
       } else {
         setMicError(`Mic error: ${err?.message || 'Unknown error'}.`);
       }
-    }
+    });
   }, []);
 
   // Cleanup on unmount
@@ -168,45 +178,50 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
               )}
               Camera Check
             </h3>
-            {!cameraOk && (
-              <button
-                onClick={requestCamera}
-                style={{
-                  padding: '8px 20px', background: '#306ca0', color: '#fff',
-                  border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 13,
-                  fontWeight: 400, fontFamily: "'Times New Roman', Times, serif",
-                }}
-              >
-                Allow Camera
-              </button>
-            )}
+            <button
+              onClick={requestCamera}
+              disabled={cameraOk}
+              style={{
+                padding: '8px 20px', background: '#306ca0', color: '#fff',
+                border: 'none', borderRadius: 4, cursor: cameraOk ? 'default' : 'pointer', fontSize: 13,
+                fontWeight: 400, fontFamily: "'Times New Roman', Times, serif",
+                opacity: cameraOk ? 0 : 1,
+                pointerEvents: cameraOk ? 'none' : 'auto',
+                transition: 'opacity 0.2s',
+              }}
+            >
+              Allow Camera
+            </button>
           </div>
           <div style={{
-            width: '100%', height: 340, borderRadius: 8, overflow: 'hidden',
+            width: '100%', height: 340, borderRadius: 8,
             background: '#f0f0f0', position: 'relative',
             border: '1px solid #e0e0e0',
           }}>
             <video ref={cameraVideoRef} autoPlay muted playsInline
               style={{
                 position: 'absolute', inset: 0,
-                width: '100%', height: '100%', objectFit: 'cover',
-                display: cameraOk ? 'block' : 'none',
+                width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8,
+                opacity: cameraOk ? 1 : 0,
+                pointerEvents: cameraOk ? 'auto' : 'none',
+                transition: 'opacity 0.2s',
               }}
             />
-            {!cameraOk && (
-              <div style={{
-                position: 'absolute', inset: 0,
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                gap: 8,
-              }}>
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5">
-                  <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                </svg>
-                <span style={{ color: '#aaa', fontSize: 13 }}>
-                  {cameraError || 'Click "Allow Camera" to enable webcam'}
-                </span>
-              </div>
-            )}
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 8,
+              opacity: cameraOk ? 0 : 1,
+              pointerEvents: cameraOk ? 'none' : 'auto',
+              transition: 'opacity 0.2s',
+            }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5">
+                <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+              <span style={{ color: '#aaa', fontSize: 13 }}>
+                {cameraError || 'Click "Allow Camera" to enable webcam'}
+              </span>
+            </div>
           </div>
           {cameraError && (
             <p style={{ color: '#dc2626', fontSize: 12, margin: '10px 0 0 0' }}>{cameraError}</p>
@@ -229,18 +244,20 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
               )}
               Microphone Check
             </h3>
-            {!micOk && (
-              <button
-                onClick={requestMic}
-                style={{
-                  padding: '8px 20px', background: '#306ca0', color: '#fff',
-                  border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 13,
-                  fontWeight: 400, fontFamily: "'Times New Roman', Times, serif",
-                }}
-              >
-                Allow Mic
-              </button>
-            )}
+            <button
+              onClick={requestMic}
+              disabled={micOk}
+              style={{
+                padding: '8px 20px', background: '#306ca0', color: '#fff',
+                border: 'none', borderRadius: 4, cursor: micOk ? 'default' : 'pointer', fontSize: 13,
+                fontWeight: 400, fontFamily: "'Times New Roman', Times, serif",
+                opacity: micOk ? 0 : 1,
+                pointerEvents: micOk ? 'none' : 'auto',
+                transition: 'opacity 0.2s',
+              }}
+            >
+              Allow Mic
+            </button>
           </div>
           <div style={{
             height: 52, borderRadius: 8, background: '#f0f0f0',
