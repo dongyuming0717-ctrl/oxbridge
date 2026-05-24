@@ -126,7 +126,7 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
       minHeight: '100vh', fontFamily: "'Times New Roman', Times, serif",
       background: '#ffffff', padding: 20,
     }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
 
         {/* Blue Top Bar */}
         <div style={{
@@ -194,7 +194,7 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
             </button>
           </div>
           <div style={{
-            width: '100%', height: 340, borderRadius: 8,
+            width: '100%', height: 420, borderRadius: 8,
             background: '#f0f0f0', position: 'relative',
             border: '1px solid #e0e0e0',
           }}>
