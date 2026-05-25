@@ -11,41 +11,31 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
   const [rulesAccepted, setRulesAccepted] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [micError, setMicError] = useState('');
-  const cameraStreamRef = useRef<MediaStream | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
-  const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
   const micMeterRef = useRef<HTMLDivElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Cleanup all streams
   const cleanup = useCallback(() => {
-    [cameraStreamRef.current, micStreamRef.current].forEach((s) => {
-      if (s) s.getTracks().forEach((t) => t.stop());
-    });
-    cameraStreamRef.current = null;
-    micStreamRef.current = null;
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach((t) => t.stop());
+      micStreamRef.current = null;
+    }
     if (audioCtxRef.current) {
       audioCtxRef.current.close();
       audioCtxRef.current = null;
     }
   }, []);
 
-  // Camera check
+  // Camera check — only verify permission, release stream immediately.
+  // The actual camera preview is shown by WebcamCapture during the exam.
   const requestCamera = useCallback(() => {
     setCameraError('');
-    if (cameraStreamRef.current) {
-      cameraStreamRef.current.getTracks().forEach((t) => t.stop());
-      cameraStreamRef.current = null;
-    }
     navigator.mediaDevices.getUserMedia({
       video: { width: 640, height: 480, facingMode: 'user' },
       audio: false,
     }).then((stream) => {
-      cameraStreamRef.current = stream;
-      if (cameraVideoRef.current) {
-        cameraVideoRef.current.srcObject = stream;
-        cameraVideoRef.current.play().catch(() => {});
-      }
+      stream.getTracks().forEach((t) => t.stop());
       setCameraOk(true);
     }).catch((err: any) => {
       const name = err?.name || '';
@@ -194,34 +184,27 @@ export function PreExamCheck({ onComplete, onBack }: Props) {
             </button>
           </div>
           <div style={{
-            width: '100%', height: 420, borderRadius: 8,
-            background: '#f0f0f0', position: 'relative',
-            border: '1px solid #e0e0e0',
+            width: '100%', padding: '40px 0', borderRadius: 8,
+            background: cameraOk ? '#f0fdf4' : '#f0f0f0',
+            border: `1px solid ${cameraOk ? '#bbf7d0' : '#e0e0e0'}`,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: 8, transition: 'all 0.3s ease',
           }}>
-            <video ref={cameraVideoRef} autoPlay muted playsInline
-              style={{
-                position: 'absolute', inset: 0,
-                width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8,
-                opacity: cameraOk ? 1 : 0,
-                pointerEvents: cameraOk ? 'auto' : 'none',
-                transition: 'opacity 0.2s',
-              }}
-            />
-            <div style={{
-              position: 'absolute', inset: 0,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 8,
-              opacity: cameraOk ? 0 : 1,
-              pointerEvents: cameraOk ? 'none' : 'auto',
-              transition: 'opacity 0.2s',
-            }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5">
-                <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-              </svg>
-              <span style={{ color: '#aaa', fontSize: 13 }}>
-                {cameraError || 'Click "Allow Camera" to enable webcam'}
-              </span>
-            </div>
+            {cameraOk ? (
+              <>
+                <span style={{ fontSize: 32 }}>&#10003;</span>
+                <span style={{ color: '#16a34a', fontSize: 14 }}>Camera access granted</span>
+              </>
+            ) : (
+              <>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5">
+                  <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                </svg>
+                <span style={{ color: '#aaa', fontSize: 13 }}>
+                  {cameraError || 'Click "Allow Camera" to enable webcam'}
+                </span>
+              </>
+            )}
           </div>
           {cameraError && (
             <p style={{ color: '#dc2626', fontSize: 12, margin: '10px 0 0 0' }}>{cameraError}</p>
